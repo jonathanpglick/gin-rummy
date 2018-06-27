@@ -2,9 +2,12 @@ defmodule App.RummyTest do
   use App.DataCase
 
   alias App.Rummy
+  alias App.Accounts
 
   describe "games" do
+    alias App.Accounts.User
     alias App.Rummy.Game
+    alias App.Rummy.Player
 
     @valid_attrs %{discard_deck: [], draw_deck: [], name: "some name", status: "some status"}
     @update_attrs %{discard_deck: [], draw_deck: [], name: "some updated name", status: "some updated status"}
@@ -17,6 +20,17 @@ defmodule App.RummyTest do
         |> Rummy.create_game()
 
       game
+    end
+
+    @valid_user_attrs %{name: "jon"}
+
+    def user_fixture(attrs \\ %{}) do
+      {:ok, user} =
+        attrs
+        |> Enum.into(@valid_user_attrs)
+        |> Accounts.create_user()
+
+      user
     end
 
     test "list_games/0 returns all games" do
@@ -66,6 +80,23 @@ defmodule App.RummyTest do
     test "change_game/1 returns a game changeset" do
       game = game_fixture()
       assert %Ecto.Changeset{} = Rummy.change_game(game)
+    end
+
+    test "add_player/2 adds a new player if it doesnt already exist and returns it" do
+      game = game_fixture()
+      user = user_fixture()
+      assert Rummy.get_players(game) == []
+      assert {:ok, player} = Rummy.add_player(game, user)
+      assert player.user_id == user.id
+      assert player.game_id == game.id
+      assert Rummy.get_players(game) == [player]
+    end
+
+    test "add_player/2 returns error when player added twice" do
+      game = game_fixture()
+      user = user_fixture()
+      {:ok, player} = Rummy.add_player(game, user)
+      assert {:error, %Ecto.Changeset{} = changeset} = Rummy.add_player(game, user)
     end
   end
 end

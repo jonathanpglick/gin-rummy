@@ -6,7 +6,9 @@ defmodule App.Rummy do
   import Ecto.Query, warn: false
   alias App.Repo
 
+  alias App.Accounts.User
   alias App.Rummy.Game
+  alias App.Rummy.Player
 
   @doc """
   Returns the list of games.
@@ -35,7 +37,9 @@ defmodule App.Rummy do
       ** (Ecto.NoResultsError)
 
   """
-  def get_game!(id), do: Repo.get!(Game, id)
+  def get_game!(id) do
+    Repo.get!(Game, id)
+  end
 
   @doc """
   Creates a game.
@@ -100,5 +104,21 @@ defmodule App.Rummy do
   """
   def change_game(%Game{} = game) do
     Game.changeset(game, %{})
+  end
+
+  @doc """
+  Gets the players for a game.
+  """
+  def get_players(%Game{id: game_id}) do
+    Player
+    |> where([p], p.game_id == ^game_id)
+    |> Repo.all()
+  end
+
+  @doc """
+  Adds a player to a game.
+  """
+  def add_player(%Game{} = game, %User{} = user) do
+    Repo.insert(Player.changeset(%Player{}, %{game_id: game.id, user_id: user.id}))
   end
 end

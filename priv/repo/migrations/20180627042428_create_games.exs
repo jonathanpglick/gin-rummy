@@ -19,6 +19,8 @@ defmodule App.Repo.Migrations.CreateGames do
       timestamps()
     end
 
+    create unique_index(:players, [:game_id, :user_id], name: :unique_game_players_index)
+
     alter table(:games) do
       add :winner_id, references(:players)
       add :current_player_id, references(:players)
