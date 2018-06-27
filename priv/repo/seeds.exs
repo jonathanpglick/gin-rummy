@@ -26,7 +26,5 @@ defmodule App.DbSeeder do
 
   Repo.delete_all(Player)
   Rummy.add_player(game1, jon)
-  #Repo.insert!(%Player{game: game1, user: jon})
-  #Repo.insert!(%Player{game: game1, user: jen})
+  Rummy.add_player(game1, jen)
 end
-

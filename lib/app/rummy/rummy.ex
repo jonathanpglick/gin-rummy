@@ -119,6 +119,14 @@ defmodule App.Rummy do
   Adds a player to a game.
   """
   def add_player(%Game{} = game, %User{} = user) do
-    Repo.insert(Player.changeset(%Player{}, %{game_id: game.id, user_id: user.id}))
+    Repo.insert(Player.insert_changeset(%Player{}, %{game_id: game.id, user_id: user.id}))
   end
+
+  @doc """
+  Removes a player from a game.
+  """
+  def remove_player(%Player{} = player) do
+    Repo.delete(player)
+  end
+
 end

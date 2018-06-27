@@ -5,7 +5,6 @@ defmodule App.RummyTest do
   alias App.Accounts
 
   describe "games" do
-    alias App.Accounts.User
     alias App.Rummy.Game
     alias App.Rummy.Player
 
@@ -95,8 +94,35 @@ defmodule App.RummyTest do
     test "add_player/2 returns error when player added twice" do
       game = game_fixture()
       user = user_fixture()
-      {:ok, player} = Rummy.add_player(game, user)
-      assert {:error, %Ecto.Changeset{} = changeset} = Rummy.add_player(game, user)
+      {:ok, %Player{}} = Rummy.add_player(game, user)
+      assert {:error, %Ecto.Changeset{}} = Rummy.add_player(game, user)
     end
+
+    test "remove_player/1" do
+      game = game_fixture()
+      user = user_fixture()
+      {:ok, player} = Rummy.add_player(game, user)
+      assert Rummy.get_players(game) == [player]
+      assert {:ok, %Player{}} = Rummy.remove_player(player)
+      assert Rummy.get_players(game) == []
+    end
+
+    test "add_player/2 wont add players if game is full" do
+      game = game_fixture()
+      user1 = user_fixture(%{name: "Player 1"})
+      user2 = user_fixture(%{name: "Player 2"})
+      user3 = user_fixture(%{name: "Player 3"})
+      user4 = user_fixture(%{name: "Player 4"})
+      user5 = user_fixture(%{name: "Player 5"})
+      assert {:ok, %Player{}} = Rummy.add_player(game, user1)
+      assert {:ok, %Player{}} = Rummy.add_player(game, user2)
+      assert {:ok, %Player{}} = Rummy.add_player(game, user3)
+      assert {:ok, %Player{} = player4} = Rummy.add_player(game, user4)
+      assert {:error, %Ecto.Changeset{} = changeset} = Rummy.add_player(game, user5)
+      assert elem(changeset.errors[:game_id], 0) == "This game is full"
+      Rummy.remove_player(player4)
+      assert {:ok, %Player{}} = Rummy.add_player(game, user5)
+    end
+
   end
 end
