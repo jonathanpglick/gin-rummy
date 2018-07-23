@@ -5,7 +5,7 @@ defmodule App.Rummy.Game do
 
   schema "games" do
     field :name, :string
-    field :status, :string
+    field :status, :string, default: "new"
     field :discard_deck, {:array, :string}
     field :draw_deck, {:array, :string}
     belongs_to :winner, App.Rummy.Player, [foreign_key: :winner_id]
@@ -21,4 +21,5 @@ defmodule App.Rummy.Game do
     |> cast(attrs, [:name, :status, :draw_deck, :discard_deck])
     |> validate_required([:name, :status, :draw_deck, :discard_deck])
   end
+
 end

@@ -8,8 +8,8 @@ defmodule App.RummyTest do
     alias App.Rummy.Game
     alias App.Rummy.Player
 
-    @valid_attrs %{discard_deck: [], draw_deck: [], name: "some name", status: "some status"}
-    @update_attrs %{discard_deck: [], draw_deck: [], name: "some updated name", status: "some updated status"}
+    @valid_attrs %{discard_deck: [], draw_deck: [], name: "some name"}
+    @update_attrs %{discard_deck: [], draw_deck: [], name: "some updated name"}
     @invalid_attrs %{discard_deck: nil, draw_deck: nil, name: nil, status: nil}
 
     def game_fixture(attrs \\ %{}) do
@@ -19,6 +19,13 @@ defmodule App.RummyTest do
         |> Rummy.create_game()
 
       game
+    end
+
+    def game_with_users_fixture(attrs \\ %{}) do
+      game = game_fixture(attrs)
+      Rummy.add_player(game, user_fixture(%{name: "Jon"}))
+      Rummy.add_player(game, user_fixture(%{name: "Jen"}))
+      Rummy.get_game!(game.id)
     end
 
     @valid_user_attrs %{name: "jon"}
@@ -47,7 +54,6 @@ defmodule App.RummyTest do
       assert game.discard_deck == []
       assert game.draw_deck == []
       assert game.name == "some name"
-      assert game.status == "some status"
     end
 
     test "create_game/1 with invalid data returns error changeset" do
@@ -61,7 +67,6 @@ defmodule App.RummyTest do
       assert game.discard_deck == []
       assert game.draw_deck == []
       assert game.name == "some updated name"
-      assert game.status == "some updated status"
     end
 
     test "update_game/2 with invalid data returns error changeset" do
@@ -79,6 +84,21 @@ defmodule App.RummyTest do
     test "change_game/1 returns a game changeset" do
       game = game_fixture()
       assert %Ecto.Changeset{} = Rummy.change_game(game)
+    end
+
+    test "game starts as new" do
+      game = game_fixture()
+      assert game.status == "new"
+    end
+
+    test "can start a game?" do
+      assert False == Rummy.can_start_game?(game_fixture())
+      assert True == Rummy.can_start_game?(game_with_users_fixture())
+    end
+
+    test "start a game" do
+      assert {:error, "Not Enough players"} = Rummy.start_game(game_fixture())
+      assert {:ok, %Game{status: "active"}} = Rummy.start_game(game_with_users_fixture())
     end
 
     test "add_player/2 adds a new player if it doesnt already exist and returns it" do

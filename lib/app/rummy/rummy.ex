@@ -107,6 +107,32 @@ defmodule App.Rummy do
   end
 
   @doc """
+  Starts a game.
+  """
+  def start_game(%Game{status: "new"} = game) do
+    case can_start_game?(game) do
+      True ->
+        game
+        |> Game.changeset(%{status: "active"})
+        |> Repo.update()
+      False ->
+        {:error, "Not Enough players"}
+    end
+  end
+
+  require IEx;
+
+  def can_start_game?(%Game{status: "new"} = game) do
+    if length(get_players(game)) >= 2 do
+      True
+    else
+      False
+    end
+  end
+
+  def can_start_game?(_game) do False end
+
+  @doc """
   Gets the players for a game.
   """
   def get_players(%Game{id: game_id}) do
