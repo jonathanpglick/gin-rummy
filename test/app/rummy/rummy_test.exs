@@ -98,7 +98,10 @@ defmodule App.RummyTest do
 
     test "start a game" do
       assert {:error, "Not Enough players"} = Rummy.start_game(game_fixture())
-      assert {:ok, %Game{status: "active"}} = Rummy.start_game(game_with_users_fixture())
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      assert %Game{status: "active"} = game
+      assert length(game.draw_deck) == 52
+      refute nil == game.current_player_id
     end
 
     test "add_player/2 adds a new player if it doesnt already exist and returns it" do

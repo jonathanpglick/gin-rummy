@@ -9,6 +9,7 @@ defmodule App.Rummy do
   alias App.Accounts.User
   alias App.Rummy.Game
   alias App.Rummy.Player
+  alias App.Rummy.Deck
 
   @doc """
   Returns the list of games.
@@ -113,14 +114,16 @@ defmodule App.Rummy do
     case can_start_game?(game) do
       True ->
         game
-        |> Game.changeset(%{status: "active"})
+        |> Game.changeset(%{
+          status: "active",
+          draw_deck: Deck.get_shuffled_deck(),
+          current_player_id: List.first(Enum.shuffle(get_players(game))).id
+        })
         |> Repo.update()
       False ->
         {:error, "Not Enough players"}
     end
   end
-
-  require IEx;
 
   def can_start_game?(%Game{status: "new"} = game) do
     if length(get_players(game)) >= 2 do
