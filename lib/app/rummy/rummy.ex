@@ -107,19 +107,40 @@ defmodule App.Rummy do
     Game.changeset(game, %{})
   end
 
+
   @doc """
   Starts a game.
   """
   def start_game(%Game{status: "new"} = game) do
     case can_start_game?(game) do
       True ->
-        game
-        |> Game.changeset(%{
-          status: "active",
-          draw_deck: Deck.get_shuffled_deck(),
-          current_player_id: List.first(Enum.shuffle(get_players(game))).id
-        })
-        |> Repo.update()
+        players = get_players(game)
+        first_player = List.first(Enum.shuffle(players))
+        deck = Deck.get_shuffled_deck()
+        {hands, draw_deck} = Deck.deal(deck, length(players))
+        players_and_hands = Enum.zip(players, hands)
+
+        multi = Ecto.Multi.new()
+
+        multi = players_and_hands
+          |> Enum.reduce(multi, fn ({player, hand}, multi) ->
+            Ecto.Multi.update(multi, String.to_atom("player_#{player.id}"), Player.changeset(player, %{cards: hand}))
+          end)
+
+        multi = multi
+          |> Ecto.Multi.update(:game, Game.changeset(game, %{
+            status: "active",
+            draw_deck: draw_deck,
+            current_player_id: first_player.id
+          }))
+
+        result = multi |> Repo.transaction()
+
+        case result do
+          {:ok, %{game: game}} -> {:ok, game}
+          {:error, error} -> {:error, error}
+        end
+
       False ->
         {:error, "Not Enough players"}
     end
