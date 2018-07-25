@@ -12,6 +12,7 @@ defmodule App.Rummy.Deck do
   """
   @suits ["H", "D", "S", "C"]
   @cards ["02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14"]
+  @cards_per_person 10
 
   def get_shuffled_deck() do
     Enum.shuffle(get_deck())
@@ -26,4 +27,15 @@ defmodule App.Rummy.Deck do
       end)
     )
   end
+
+  def deal(deck, num_players) do
+    hands = Enum.map(0..num_players-1, fn (index) -> 
+      Enum.slice(deck, index*@cards_per_person, @cards_per_person)
+    end)
+
+    {_, draw_deck} = Enum.split(deck, num_players*@cards_per_person)
+
+    {hands, draw_deck}
+  end
+
 end
