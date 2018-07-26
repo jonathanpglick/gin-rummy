@@ -92,8 +92,8 @@ defmodule App.RummyTest do
     end
 
     test "can start a game?" do
-      assert False == Rummy.can_start_game?(game_fixture())
-      assert True == Rummy.can_start_game?(game_with_users_fixture())
+      assert false == Rummy.can_start_game?(game_fixture())
+      assert true == Rummy.can_start_game?(game_with_users_fixture())
     end
 
     test "start a game" do

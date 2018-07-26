@@ -113,7 +113,7 @@ defmodule App.Rummy do
   """
   def start_game(%Game{status: "new"} = game) do
     case can_start_game?(game) do
-      True ->
+      true ->
         players = get_players(game)
         first_player = List.first(Enum.shuffle(players))
         deck = Deck.get_shuffled_deck()
@@ -141,20 +141,25 @@ defmodule App.Rummy do
           {:error, error} -> {:error, error}
         end
 
-      False ->
+      false ->
         {:error, "Not Enough players"}
     end
   end
 
   def can_start_game?(%Game{status: "new"} = game) do
     if length(get_players(game)) >= 2 do
-      True
+      true
     else
-      False
+      false
     end
   end
 
-  def can_start_game?(_game) do False end
+  @doc """
+  Otherwise false
+  """
+  def can_start_game?(_game) do
+    false
+  end
 
   @doc """
   Gets the players for a game.
