@@ -146,6 +146,9 @@ defmodule App.Rummy do
     end
   end
 
+  @doc """
+  Can the game be started?
+  """
   def can_start_game?(%Game{status: "new"} = game) do
     if length(get_players(game)) >= 2 do
       true
@@ -171,6 +174,13 @@ defmodule App.Rummy do
   end
 
   @doc """
+  Current player.
+  """
+  def get_current_player!(%Game{status: "active"} = game) do
+    Repo.get!(Player, game.current_player_id)
+  end
+
+  @doc """
   Adds a player to a game.
   """
   def add_player(%Game{} = game, %User{} = user) do
@@ -182,6 +192,69 @@ defmodule App.Rummy do
   """
   def remove_player(%Player{} = player) do
     Repo.delete(player)
+  end
+
+  @doc """
+  Draw from draw deck.
+  """
+  def draw_from_deck(%Game{} = game, %Player{} = player) do
+    [card | draw_deck] = game.draw_deck
+
+    game_attrs =
+      case length(draw_deck) do
+        0 ->
+          [top_discard_card | discard_deck] = game.discard_deck
+          %{draw_deck: Enum.shuffle(discard_deck), discard_deck: [top_discard_card]}
+        _ ->
+          %{draw_deck: draw_deck}
+      end
+
+    result = Ecto.Multi.new()
+      |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: player.cards ++ [card]}))
+      |> Ecto.Multi.update(:game, Game.changeset(game, game_attrs))
+      |> Repo.transaction()
+
+    case result do
+      {:ok, %{game: game, player: player}} -> {:ok, game, player}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  @doc """
+  Draw from discard deck.
+  """
+  def draw_from_discard(%Game{discard_deck: discard_deck} = game, %Player{} = player) when length(discard_deck) > 0 do
+    [card | new_discard_deck] = discard_deck
+
+    result = Ecto.Multi.new()
+      |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: player.cards ++ [card]}))
+      |> Ecto.Multi.update(:game, Game.changeset(game, %{discard_deck: new_discard_deck}))
+      |> Repo.transaction()
+
+    case result do
+      {:ok, %{game: game, player: player}} -> {:ok, game, player}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  def draw_from_discard(_game, _player) do
+    {:error, "Insufficient cards"}
+  end
+
+  @doc """
+  Can draw from discard.
+  """
+  def can_draw_from_discard?(%Game{} = game) do
+    case length(game.discard_deck) do
+      0 -> false
+      _ -> true
+    end
+  end
+
+  @doc """
+  Discard a card.
+  """
+  def discard(%Game{} = _game, %Player{} = _player) do
   end
 
 end
