@@ -146,6 +146,29 @@ defmodule App.RummyTest do
       assert drawn_card in game.discard_deck == false
     end
 
+    test "wrong player cant discard" do
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      current_player = Rummy.get_current_player!(game)
+      assert Rummy.can_draw_from_discard?(game) == false
+      assert {:error, _} = Rummy.draw_from_discard(game, current_player)
+      [first_card | new_draw_deck] = game.draw_deck
+      {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+      assert Rummy.can_draw_from_discard?(game) == true
+      [drawn_card | _] = game.discard_deck
+      {:ok, game, player} = Rummy.draw_from_discard(game, current_player)
+      assert drawn_card in player.cards == true
+      assert drawn_card in game.discard_deck == false
+    end
+
+    test "player discards" do
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      current_player = Rummy.get_current_player!(game)
+      {:ok, game, current_player} = Rummy.draw_from_deck(game, current_player)
+      assert game.current_player_id == current_player.id
+      {:ok, game, _previous_current_player} = Rummy.discard(game, current_player, List.first(current_player.cards))
+      assert game.current_player_id != current_player.id
+    end
+
     test "add_player/2 adds a new player if it doesnt already exist and returns it" do
       game = game_fixture()
       user = user_fixture()

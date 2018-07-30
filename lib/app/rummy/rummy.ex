@@ -254,7 +254,34 @@ defmodule App.Rummy do
   @doc """
   Discard a card.
   """
-  def discard(%Game{} = _game, %Player{} = _player) do
+  def discard(%Game{current_player_id: current_player_id} = game, %Player{id: player_id, cards: cards} = player, card) when current_player_id == player_id and length(cards) == 11 do
+
+    # Switch the current_player_id to the next player.
+    players = get_players(game)
+    max_player_index = length(players) - 1
+    current_player_index = Enum.find_index(players, fn (p) -> p.id == player.id end)
+    next_player_index = case current_player_index do
+      ^max_player_index -> 0
+      index -> index + 1
+    end
+    next_player = Enum.at(players, next_player_index)
+
+    result = Ecto.Multi.new()
+      |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: List.delete(cards, card)}))
+      |> Ecto.Multi.update(:game, Game.changeset(game, %{
+        discard_deck: [card] ++ game.discard_deck,
+        current_player_id: next_player.id,
+      }))
+      |> Repo.transaction()
+
+    case result do
+      {:ok, %{game: game, player: player}} -> {:ok, game, player}
+      {:error, error} -> {:error, error}
+    end
+  end
+
+  def discard(_game, _player, _card) do
+    {:error, "Can't discard"}
   end
 
 end
