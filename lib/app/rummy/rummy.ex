@@ -157,9 +157,6 @@ defmodule App.Rummy do
     end
   end
 
-  @doc """
-  Otherwise false
-  """
   def can_start_game?(_game) do
     false
   end
@@ -181,6 +178,20 @@ defmodule App.Rummy do
   end
 
   @doc """
+  Gets the next player out of the game players.
+  """
+  def get_next_player!(%Game{} = game) do
+    players = get_players(game)
+    max_player_index = length(players) - 1
+    current_player_index = Enum.find_index(players, fn (p) -> p.id == game.current_player_id end)
+    next_player_index = case current_player_index do
+      ^max_player_index -> 0
+      index -> index + 1
+    end
+    Enum.at(players, next_player_index)
+  end
+
+  @doc """
   Adds a player to a game.
   """
   def add_player(%Game{} = game, %User{} = user) do
@@ -197,7 +208,7 @@ defmodule App.Rummy do
   @doc """
   Draw from draw deck.
   """
-  def draw_from_deck(%Game{} = game, %Player{} = player) do
+  def draw_from_deck(%Game{current_player_id: current_player_id} = game, %Player{id: current_player_id} = player) do
     [card | draw_deck] = game.draw_deck
 
     game_attrs =
@@ -220,10 +231,14 @@ defmodule App.Rummy do
     end
   end
 
+  def draw_from_deck(_game, _player) do
+    {:error, "Can't draw from deck"}
+  end
+
   @doc """
   Draw from discard deck.
   """
-  def draw_from_discard(%Game{discard_deck: discard_deck} = game, %Player{} = player) when length(discard_deck) > 0 do
+  def draw_from_discard(%Game{discard_deck: discard_deck, current_player_id: current_player_id} = game, %Player{id: current_player_id} = player) when length(discard_deck) > 0 do
     [card | new_discard_deck] = discard_deck
 
     result = Ecto.Multi.new()
@@ -237,8 +252,12 @@ defmodule App.Rummy do
     end
   end
 
-  def draw_from_discard(_game, _player) do
+  def draw_from_discard(%Game{discard_deck: discard_deck}, _player) when length(discard_deck) == 0 do
     {:error, "Insufficient cards"}
+  end
+
+  def draw_from_discard(_game, _player) do
+    {:error, "Can't draw from deck"}
   end
 
   @doc """
@@ -254,17 +273,9 @@ defmodule App.Rummy do
   @doc """
   Discard a card.
   """
-  def discard(%Game{current_player_id: current_player_id} = game, %Player{id: player_id, cards: cards} = player, card) when current_player_id == player_id and length(cards) == 11 do
+  def discard(%Game{current_player_id: current_player_id} = game, %Player{id: current_player_id, cards: cards} = player, card) when length(cards) == 11 do
 
-    # Switch the current_player_id to the next player.
-    players = get_players(game)
-    max_player_index = length(players) - 1
-    current_player_index = Enum.find_index(players, fn (p) -> p.id == player.id end)
-    next_player_index = case current_player_index do
-      ^max_player_index -> 0
-      index -> index + 1
-    end
-    next_player = Enum.at(players, next_player_index)
+    next_player = get_next_player!(game)
 
     result = Ecto.Multi.new()
       |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: List.delete(cards, card)}))

@@ -115,6 +115,12 @@ defmodule App.RummyTest do
       assert first_card in game.draw_deck == false
     end
 
+    test "wrong player can't draw from deck" do
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      next_player = Rummy.get_next_player!(game)
+      assert {:error, _error_message} = Rummy.draw_from_deck(game, next_player)
+    end
+
     test "draw from deck shuffles discard deck" do
       {:ok, game} = Rummy.start_game(game_with_users_fixture())
       current_player = Rummy.get_current_player!(game)
@@ -136,7 +142,7 @@ defmodule App.RummyTest do
       {:ok, game} = Rummy.start_game(game_with_users_fixture())
       current_player = Rummy.get_current_player!(game)
       assert Rummy.can_draw_from_discard?(game) == false
-      assert {:error, _} = Rummy.draw_from_discard(game, current_player)
+      assert {:error, "Insufficient cards"} = Rummy.draw_from_discard(game, current_player)
       [first_card | new_draw_deck] = game.draw_deck
       {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
       assert Rummy.can_draw_from_discard?(game) == true
@@ -144,6 +150,14 @@ defmodule App.RummyTest do
       {:ok, game, player} = Rummy.draw_from_discard(game, current_player)
       assert drawn_card in player.cards == true
       assert drawn_card in game.discard_deck == false
+    end
+
+    test "wrong player can't draw from discard" do
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      [first_card | new_draw_deck] = game.draw_deck
+      {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+      next_player = Rummy.get_next_player!(game)
+      assert {:error, _} = Rummy.draw_from_discard(game, next_player)
     end
 
     test "wrong player cant discard" do
@@ -167,6 +181,14 @@ defmodule App.RummyTest do
       assert game.current_player_id == current_player.id
       {:ok, game, _previous_current_player} = Rummy.discard(game, current_player, List.first(current_player.cards))
       assert game.current_player_id != current_player.id
+    end
+
+    test "Not current player can't discard" do
+      {:ok, game} = Rummy.start_game(game_with_users_fixture())
+      next_player = Rummy.get_next_player!(game)
+      {:ok, game, current_player} = Rummy.draw_from_deck(game, Rummy.get_current_player!(game))
+      assert game.current_player_id == current_player.id
+      {:error, _error_message} = Rummy.discard(game, next_player, List.first(current_player.cards))
     end
 
     test "add_player/2 adds a new player if it doesnt already exist and returns it" do
