@@ -1,5 +1,4 @@
 defmodule App.Rummy.Deck do
-
   @moduledoc """
   Utilities to represent a deck of cards.
 
@@ -29,13 +28,13 @@ defmodule App.Rummy.Deck do
   end
 
   def deal(deck, num_players) do
-    hands = Enum.map(0..num_players-1, fn (index) -> 
-      Enum.slice(deck, index*@cards_per_person, @cards_per_person)
-    end)
+    hands =
+      Enum.map(0..(num_players - 1), fn index ->
+        Enum.slice(deck, index * @cards_per_person, @cards_per_person)
+      end)
 
-    {_, draw_deck} = Enum.split(deck, num_players*@cards_per_person)
+    {_, draw_deck} = Enum.split(deck, num_players * @cards_per_person)
 
     {hands, draw_deck}
   end
-
 end

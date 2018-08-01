@@ -107,7 +107,6 @@ defmodule App.Rummy do
     Game.changeset(game, %{})
   end
 
-
   @doc """
   Starts a game.
   """
@@ -122,17 +121,26 @@ defmodule App.Rummy do
 
         multi = Ecto.Multi.new()
 
-        multi = players_and_hands
-          |> Enum.reduce(multi, fn ({player, hand}, multi) ->
-            Ecto.Multi.update(multi, String.to_atom("player_#{player.id}"), Player.changeset(player, %{cards: hand}))
+        multi =
+          players_and_hands
+          |> Enum.reduce(multi, fn {player, hand}, multi ->
+            Ecto.Multi.update(
+              multi,
+              String.to_atom("player_#{player.id}"),
+              Player.changeset(player, %{cards: hand})
+            )
           end)
 
-        multi = multi
-          |> Ecto.Multi.update(:game, Game.changeset(game, %{
-            status: "active",
-            draw_deck: draw_deck,
-            current_player_id: first_player.id
-          }))
+        multi =
+          multi
+          |> Ecto.Multi.update(
+            :game,
+            Game.changeset(game, %{
+              status: "active",
+              draw_deck: draw_deck,
+              current_player_id: first_player.id
+            })
+          )
 
         result = multi |> Repo.transaction()
 
@@ -183,11 +191,14 @@ defmodule App.Rummy do
   def get_next_player!(%Game{} = game) do
     players = get_players(game)
     max_player_index = length(players) - 1
-    current_player_index = Enum.find_index(players, fn (p) -> p.id == game.current_player_id end)
-    next_player_index = case current_player_index do
-      ^max_player_index -> 0
-      index -> index + 1
-    end
+    current_player_index = Enum.find_index(players, fn p -> p.id == game.current_player_id end)
+
+    next_player_index =
+      case current_player_index do
+        ^max_player_index -> 0
+        index -> index + 1
+      end
+
     Enum.at(players, next_player_index)
   end
 
@@ -208,7 +219,10 @@ defmodule App.Rummy do
   @doc """
   Draw from draw deck.
   """
-  def draw_from_deck(%Game{current_player_id: current_player_id} = game, %Player{id: current_player_id} = player) do
+  def draw_from_deck(
+        %Game{current_player_id: current_player_id} = game,
+        %Player{id: current_player_id} = player
+      ) do
     [card | draw_deck] = game.draw_deck
 
     game_attrs =
@@ -216,11 +230,13 @@ defmodule App.Rummy do
         0 ->
           [top_discard_card | discard_deck] = game.discard_deck
           %{draw_deck: Enum.shuffle(discard_deck), discard_deck: [top_discard_card]}
+
         _ ->
           %{draw_deck: draw_deck}
       end
 
-    result = Ecto.Multi.new()
+    result =
+      Ecto.Multi.new()
       |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: player.cards ++ [card]}))
       |> Ecto.Multi.update(:game, Game.changeset(game, game_attrs))
       |> Repo.transaction()
@@ -238,10 +254,15 @@ defmodule App.Rummy do
   @doc """
   Draw from discard deck.
   """
-  def draw_from_discard(%Game{discard_deck: discard_deck, current_player_id: current_player_id} = game, %Player{id: current_player_id} = player) when length(discard_deck) > 0 do
+  def draw_from_discard(
+        %Game{discard_deck: discard_deck, current_player_id: current_player_id} = game,
+        %Player{id: current_player_id} = player
+      )
+      when length(discard_deck) > 0 do
     [card | new_discard_deck] = discard_deck
 
-    result = Ecto.Multi.new()
+    result =
+      Ecto.Multi.new()
       |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: player.cards ++ [card]}))
       |> Ecto.Multi.update(:game, Game.changeset(game, %{discard_deck: new_discard_deck}))
       |> Repo.transaction()
@@ -252,7 +273,8 @@ defmodule App.Rummy do
     end
   end
 
-  def draw_from_discard(%Game{discard_deck: discard_deck}, _player) when length(discard_deck) == 0 do
+  def draw_from_discard(%Game{discard_deck: discard_deck}, _player)
+      when length(discard_deck) == 0 do
     {:error, "Insufficient cards"}
   end
 
@@ -273,16 +295,24 @@ defmodule App.Rummy do
   @doc """
   Discard a card.
   """
-  def discard(%Game{current_player_id: current_player_id} = game, %Player{id: current_player_id, cards: cards} = player, card) when length(cards) == 11 do
-
+  def discard(
+        %Game{current_player_id: current_player_id} = game,
+        %Player{id: current_player_id, cards: cards} = player,
+        card
+      )
+      when length(cards) == 11 do
     next_player = get_next_player!(game)
 
-    result = Ecto.Multi.new()
+    result =
+      Ecto.Multi.new()
       |> Ecto.Multi.update(:player, Player.changeset(player, %{cards: List.delete(cards, card)}))
-      |> Ecto.Multi.update(:game, Game.changeset(game, %{
-        discard_deck: [card] ++ game.discard_deck,
-        current_player_id: next_player.id,
-      }))
+      |> Ecto.Multi.update(
+        :game,
+        Game.changeset(game, %{
+          discard_deck: [card] ++ game.discard_deck,
+          current_player_id: next_player.id
+        })
+      )
       |> Repo.transaction()
 
     case result do
@@ -294,5 +324,4 @@ defmodule App.Rummy do
   def discard(_game, _player, _card) do
     {:error, "Can't discard"}
   end
-
 end

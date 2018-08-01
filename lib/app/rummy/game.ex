@@ -2,15 +2,14 @@ defmodule App.Rummy.Game do
   use Ecto.Schema
   import Ecto.Changeset
 
-
   schema "games" do
-    field :name, :string
-    field :status, :string, default: "new"
-    field :discard_deck, {:array, :string}, default: []
-    field :draw_deck, {:array, :string}, default: []
-    belongs_to :winner, App.Rummy.Player, [foreign_key: :winner_id]
-    belongs_to :current_player, App.Rummy.Player, [foreign_key: :current_player_id]
-    has_many :players, App.Rummy.Player
+    field(:name, :string)
+    field(:status, :string, default: "new")
+    field(:discard_deck, {:array, :string}, default: [])
+    field(:draw_deck, {:array, :string}, default: [])
+    belongs_to(:winner, App.Rummy.Player, foreign_key: :winner_id)
+    belongs_to(:current_player, App.Rummy.Player, foreign_key: :current_player_id)
+    has_many(:players, App.Rummy.Player)
 
     timestamps()
   end
