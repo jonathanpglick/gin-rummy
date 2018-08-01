@@ -20,7 +20,7 @@ defmodule App.Rummy do
       [%Game{}, ...]
 
   """
-  def list_games do
+  def list_games() do
     Repo.all(Game)
   end
 
@@ -158,11 +158,7 @@ defmodule App.Rummy do
   Can the game be started?
   """
   def can_start_game?(%Game{status: "new"} = game) do
-    if length(get_players(game)) >= 2 do
-      true
-    else
-      false
-    end
+    length(get_players(game)) >= 2
   end
 
   def can_start_game?(_game) do
