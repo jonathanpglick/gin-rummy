@@ -1,0 +1,33 @@
+<div class="jumbotron">
+  <h2><%= gettext "Play Gin Rummy!" %></h2>
+  <p class="lead"></p>
+</div>
+
+<div class="row">
+  <div class="col-lg-12">
+    <h3><%= @game.name %></h3>
+    <p>
+    <a href="<%= page_path(@conn, :index) %>">&laquo; Back to Games</a>
+    </p>
+
+    <dl>
+      <dt>Status</dt>
+      <dl><%= @game.status %></dl>
+      <dt>Current Turn</dt>
+      <dl><%= @current_player.user.name %></dl>
+    </dl>
+  </div>
+</div>
+
+<div class="row">
+  <%= for player <- @players do %>
+    <div class="col-sm-6">
+      <h3><%= player.user.name %><%= if player.id == @current_player.id do %>◀<% end %></h3>
+      <ul>
+        <%= for card <- player.cards do %>
+          <li><%= card %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

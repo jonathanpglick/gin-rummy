@@ -127,10 +127,12 @@ defmodule App.RummyTest do
 
       # Leave only one card in the draw deck
       [last_card | discard_deck] = Enum.reverse(game.draw_deck)
-      {:ok, game} = Rummy.update_game(game, %{
-        draw_deck: [last_card],
-        discard_deck: Enum.reverse(discard_deck)
-      })
+
+      {:ok, game} =
+        Rummy.update_game(game, %{
+          draw_deck: [last_card],
+          discard_deck: Enum.reverse(discard_deck)
+        })
 
       assert length(game.draw_deck) == 1
       {:ok, game, _} = Rummy.draw_from_deck(game, current_player)
@@ -144,7 +146,10 @@ defmodule App.RummyTest do
       assert Rummy.can_draw_from_discard?(game) == false
       assert {:error, "Insufficient cards"} = Rummy.draw_from_discard(game, current_player)
       [first_card | new_draw_deck] = game.draw_deck
-      {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
+      {:ok, game} =
+        Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
       assert Rummy.can_draw_from_discard?(game) == true
       [drawn_card | _] = game.discard_deck
       {:ok, game, player} = Rummy.draw_from_discard(game, current_player)
@@ -155,7 +160,10 @@ defmodule App.RummyTest do
     test "wrong player can't draw from discard" do
       {:ok, game} = Rummy.start_game(game_with_users_fixture())
       [first_card | new_draw_deck] = game.draw_deck
-      {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
+      {:ok, game} =
+        Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
       next_player = Rummy.get_next_player!(game)
       assert {:error, _} = Rummy.draw_from_discard(game, next_player)
     end
@@ -166,7 +174,10 @@ defmodule App.RummyTest do
       assert Rummy.can_draw_from_discard?(game) == false
       assert {:error, _} = Rummy.draw_from_discard(game, current_player)
       [first_card | new_draw_deck] = game.draw_deck
-      {:ok, game} = Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
+      {:ok, game} =
+        Rummy.update_game(game, %{draw_deck: new_draw_deck, discard_deck: [first_card]})
+
       assert Rummy.can_draw_from_discard?(game) == true
       [drawn_card | _] = game.discard_deck
       {:ok, game, player} = Rummy.draw_from_discard(game, current_player)
@@ -179,16 +190,21 @@ defmodule App.RummyTest do
       current_player = Rummy.get_current_player!(game)
       {:ok, game, current_player} = Rummy.draw_from_deck(game, current_player)
       assert game.current_player_id == current_player.id
-      {:ok, game, _previous_current_player} = Rummy.discard(game, current_player, List.first(current_player.cards))
+
+      {:ok, game, _previous_current_player} =
+        Rummy.discard(game, current_player, List.first(current_player.cards))
+
       assert game.current_player_id != current_player.id
     end
 
-    test "Not current player can't discard" do
+    test "not current player can't discard" do
       {:ok, game} = Rummy.start_game(game_with_users_fixture())
       next_player = Rummy.get_next_player!(game)
       {:ok, game, current_player} = Rummy.draw_from_deck(game, Rummy.get_current_player!(game))
       assert game.current_player_id == current_player.id
-      {:error, _error_message} = Rummy.discard(game, next_player, List.first(current_player.cards))
+
+      {:error, _error_message} =
+        Rummy.discard(game, next_player, List.first(current_player.cards))
     end
 
     test "add_player/2 adds a new player if it doesnt already exist and returns it" do
@@ -198,7 +214,9 @@ defmodule App.RummyTest do
       assert {:ok, player} = Rummy.add_player(game, user)
       assert player.user_id == user.id
       assert player.game_id == game.id
-      assert Rummy.get_players(game) == [player]
+      assert length(Rummy.get_players(game)) == 1
+      [first_player | _other_players] = Rummy.get_players(game)
+      assert first_player.id == player.id
     end
 
     test "add_player/2 returns error when player added twice" do
@@ -212,7 +230,9 @@ defmodule App.RummyTest do
       game = game_fixture()
       user = user_fixture()
       {:ok, player} = Rummy.add_player(game, user)
-      assert Rummy.get_players(game) == [player]
+      [first_player | _other_players] = Rummy.get_players(game)
+      assert first_player.id == player.id
+      assert length(Rummy.get_players(game)) == 1
       assert {:ok, %Player{}} = Rummy.remove_player(player)
       assert Rummy.get_players(game) == []
     end
@@ -233,6 +253,5 @@ defmodule App.RummyTest do
       Rummy.remove_player(player4)
       assert {:ok, %Player{}} = Rummy.add_player(game, user5)
     end
-
   end
 end

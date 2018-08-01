@@ -16,7 +16,7 @@
       <header class="header">
         <nav role="navigation">
           <ul class="nav nav-pills">
-            <li><a href="">Home</a></li>
+            <li><a href="<%= page_path(@conn, :index) %>">Games</a></li>
           </ul>
         </nav>
       </header>

@@ -170,7 +170,8 @@ defmodule App.Rummy do
   """
   def get_players(%Game{id: game_id}) do
     Player
-    |> where([p], p.game_id == ^game_id)
+    |> where([player], player.game_id == ^game_id)
+    |> preload([:user])
     |> Repo.all()
   end
 
@@ -178,7 +179,7 @@ defmodule App.Rummy do
   Current player.
   """
   def get_current_player!(%Game{status: "active"} = game) do
-    Repo.get!(Player, game.current_player_id)
+    Repo.get!(Player, game.current_player_id) |> Repo.preload(:user)
   end
 
   @doc """

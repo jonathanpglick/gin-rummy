@@ -9,7 +9,7 @@
     <ul>
       <%= for game <- @conn.assigns.games do %>
         <li>
-          <a href=""><%= game.name %></a>
+          <a href="<%= page_path(@conn, :show_game, game.id) %>"><%= game.name %></a>
         </li>
       <% end %>
     </ul>
